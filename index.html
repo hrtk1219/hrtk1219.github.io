@@ -18,11 +18,12 @@
 
         <div style="border:1px solid #000;">
           <div id="result_text"></div>
-          <form name="googleform" target="newtab" action="http://www.google.co.jp/search" method="GET" style="display:none;">
+<!--           <form name="googleform" target="newtab" action="http://www.google.co.jp/search" method="GET" style="display:none;"> -->
+                  <form name="googleform" target="windowName" rel=“noopener noreferrer” action="http://www.google.co.jp/search" method="GET" style="display:none;">
             <input type="hidden" name="hl" value="ja">
             <input type="hidden" name="q" id="search_param" maxLength="255" size="30">
           </form>
-          <input type="submit" id="start_recognition" value="音声入力でGoogle検索開始！" style="color:#000; background-color:#ff9b00cf;">
+          <input type="submit" id="start_recognition" value="search" style="color:#000; background-color:#ff9b00cf;">
         </div>
         <br>
         <div id="status">
@@ -30,6 +31,7 @@
         </div>
 
         <script type="text/javascript">
+          window.open("https://www.google.com", "windowName", "resizable,scrollbars,status");
           var speech_count = 0;
           document.getElementById("start_recognition").onclick = function vr_function() {
             var result_text = document.getElementById('result_text');
@@ -39,89 +41,48 @@
             SpeechRecognition = webkitSpeechRecognition || SpeechRecognition;
             const recognition = new SpeechRecognition();
             recognition.lang = 'ja';
-            recognition.interimResults = true;
-            recognition.continuous = true;
+            
+            // return progress
+            recognition.interimResults = false;
+            
+            // continue recognition
+            recognition.continuous = false;
             recognition.onresult = function(event) {
               var results = event.results;
               if (document.getElementById('interim_result') == null) {
-                var interim = document.createElement('d' + 'iv');
+                var interim = document.createElement('div');
+                // console.log(interim)
                 interim.setAttribute('class', 'results');
                 interim.setAttribute('id', 'interim_result');
                 document.getElementById('result_text').appendChild(interim);
               }
               for (var i = event.resultIndex; i < results.length; i++) {
+                // console.log(results[i])
                 if (results[i].isFinal) {
                   speech_count++;
                   result_line = "<font size='4'>" + results[i][0].transcript + "</font>";
                   document.getElementById('interim_result').innerHTML = result_line;
                   document.getElementById('interim_result').setAttribute('id', 'result' + speech_count);
+                  // console.log(results[i][0].transcript)
+                  // console.log(results[i][0].transcript.slice(5, -1))
                   document.getElementById('search_param').setAttribute('value', results[i][0].transcript);
+                  // document.getElementById('search_param').setAttribute('value', results[i][0].transcript.slice(5, -1));
                   document.googleform.submit();
                   document.getElementById('status').innerHTML = "status: searched!";
                   recognition.stop();
                   return;
-                } else {
-                  document.getElementById('interim_result').innerHTML = "<font size='4' color='gray'>" + results[i][0].transcript + "</font>";
-                  flag_speech = 1;
-                }
+                } 
+                // else {
+                //   document.getElementById('interim_result').innerHTML = "<font size='4' color='gray'>" + results[i][0].transcript + "</font>";
+                //   flag_speech = 1;
+                // }
               }
             }
             document.getElementById('status').innerHTML = "status: recording...";
             recognition.start();
           }
         </script>
-<!--         <nav>
-          <ul>
-            <li><a href="#">Home</a></li>
-            <li><a href="#">About</a></li>
-            <li><a href="#">Projects</a></li>
-            <li><a href="#">Contact</a></li>
-          </ul>
 
-            <form>
-                <input type="search" name="q" placeholder="Search...">
-                <input type="submit" value="Go!">
-            </form>
-        </nav> -->
-
-    <!--     <img src="images/html-icon.png" alt="an image of html-icon"> -->
-
-<!--         <main>
-            <article>
-                <p>This is Takuya Hara's page.</p>
-                
-                <p><strong>Learning...</strong></p>
-                	<ul>
-                		<li>HTML</li>
-                		<li>CSS</li>
-                		<li>JavaScript</li>
-                		<li>React</li>
-                	</ul>
-
-                <p><strong>To Do</strong><p>
-                	<ol>
-                		<li>Web introduction</li>
-                		<li>HTML tutorial</li>
-                		<li>CSS tutorial</li>
-                		<li>JavaScript tutorial</li>
-                		<li>React tutorial</li>
-                	</ol>
-            </article>
-
-            <aside>
-                <p>reference</p>
-                	<ul>
-                		<li><a href="https://developer.mozilla.org/ja/docs/Learn/Getting_started_with_the_web/HTML_basics">HTML_basics</a></li>
-                	</ul>
-                	<ul>
-                		<li><a href = https://developer.mozilla.org/ja/docs/Learn/Getting_started_with_the_web/CSS_basics>CSS_basics</a></li>
-                	</ul>
-            </aside>
-        </main> -->
-
-<!--         <button>change user</button> -->
-<!--         <script src="scripts/main.js"></script>
- -->
         <footer>
             <p>©Copyright 2020 Takuya Hara.</p>
         </footer>
