@@ -2,9 +2,9 @@
 <html lang="en-US">
     <head>
         <meta charset="utf-8">
-        <meta name="author" content="Takuya Hara">
-        <meta name="description" content="This is Takuya Hara's page.">
-        <title>Takuya Hara</title>
+        <meta name="author" content="Human-Chrome Augmentation">
+        <meta name="description" content="">
+        <title>Human-Chrome Augmentation</title>
 
         <link href="styles/style.css" rel="stylesheet" type="text/css">
         <link href="https://fonts.googleapis.com/css2?family=Ubuntu&display=swap" rel="stylesheet">
@@ -13,78 +13,161 @@
 
     <body>
         <header>
-            <h1>Takuya Hara's page</h1>
+            <h1>Human-Chrome Augmentation</h1>
         </header>
 
         <div style="border:1px solid #000;">
-          <div id="result_text"></div>
+            <div id="result_text"></div>
 <!--           <form name="googleform" target="newtab" action="http://www.google.co.jp/search" method="GET" style="display:none;"> -->
-                  <form name="googleform" target="windowName" rel=“noopener noreferrer” action="http://www.google.co.jp/search" method="GET" style="display:none;">
-            <input type="hidden" name="hl" value="ja">
-            <input type="hidden" name="q" id="search_param" maxLength="255" size="30">
-          </form>
-          <input type="submit" id="start_recognition" value="search" style="color:#000; background-color:#ff9b00cf;">
+            <form name="googleform" target="windowName" rel=“noopener noreferrer” action="http://www.google.co.jp/search" method="GET" style="display:none;">
+                <input type="hidden" name="hl" value="ja">
+                <input type="hidden" name="q" id="search_param" maxLength="255" size="30">
+            </form>
+            <input type="submit" id="start_recognition" value="search" style="color:#000; background-color:#ff9b00cf;">
         </div>
         <br>
         <div id="status">
-        status: stop
+            status: stop
+        </div>
+        <br>
+        <div>
+            <p>history<p>
+                <ol id="history">
+                </ol>
         </div>
 
+        <script src="kuromoji.git/build/kuromoji.js"></script>
+
         <script type="text/javascript">
-          window.open("https://www.google.com", "windowName", "resizable,scrollbars,status");
-          var speech_count = 0;
-          document.getElementById("start_recognition").onclick = function vr_function() {
-            var result_text = document.getElementById('result_text');
-            while (result_text.firstChild) {
-              result_text.removeChild(result_text.firstChild);
-            }
-            SpeechRecognition = webkitSpeechRecognition || SpeechRecognition;
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'ja';
+            window.open("https://www.google.com", "windowName", "resizable,scrollbars,status");
             
-            // return progress
-            recognition.interimResults = false;
+            var a = "";
+            var speech_count = 0;
             
-            // continue recognition
-            recognition.continuous = false;
-            recognition.onresult = function(event) {
-              var results = event.results;
-              if (document.getElementById('interim_result') == null) {
-                var interim = document.createElement('div');
-                // console.log(interim)
-                interim.setAttribute('class', 'results');
-                interim.setAttribute('id', 'interim_result');
-                document.getElementById('result_text').appendChild(interim);
-              }
-              for (var i = event.resultIndex; i < results.length; i++) {
-                // console.log(results[i])
-                if (results[i].isFinal) {
-                  speech_count++;
-                  result_line = "<font size='4'>" + results[i][0].transcript + "</font>";
-                  document.getElementById('interim_result').innerHTML = result_line;
-                  document.getElementById('interim_result').setAttribute('id', 'result' + speech_count);
-                  // console.log(results[i][0].transcript)
-                  // console.log(results[i][0].transcript.slice(5, -1))
-                  document.getElementById('search_param').setAttribute('value', results[i][0].transcript);
-                  // document.getElementById('search_param').setAttribute('value', results[i][0].transcript.slice(5, -1));
-                  document.googleform.submit();
-                  document.getElementById('status').innerHTML = "status: searched!";
-                  recognition.stop();
-                  return;
-                } 
-                // else {
-                //   document.getElementById('interim_result').innerHTML = "<font size='4' color='gray'>" + results[i][0].transcript + "</font>";
-                //   flag_speech = 1;
-                // }
-              }
+            var builder = kuromoji.builder({
+                dicPath: "kuromoji.git/dict"
+            });
+
+            function buildkeitaiso(r) {
+                console.log(r);
+                console.log(typeof r);
+                // kuromoji.builder({ dicPath: "kuromoji.js/dict" }).build(function (err, tokenizer) {
+                builder.build(function(err, tokenizer){
+                    var tokens = tokenizer.tokenize(r);
+                    for (var item in tokens){
+                        if (tokens[item]["pos"] == "名詞") {
+                            // console.log(typeof tokens[item]["surface_form"]);
+                            a += tokens[item]["surface_form"];
+                            a += " ";
+                            // console.log(typeof a);
+                        }
+                    }
+                    a = a.slice(0, -1);
+                    console.log(a);
+                    console.log("a determined");
+                    document.getElementById('search_param').setAttribute('value', a);
+                    console.log("setAttribute");
+                    document.googleform.submit();
+                    console.log("submitted");
+                    document.getElementById('status').innerHTML = "status: searched!";                
+                    console.log("finish");
+
+                    var textModMsg = document.getElementById("history");
+                    var newElemLi = document.createElement("li");
+                    var newElemLiText = document.createTextNode(r);
+                    newElemLi.appendChild(newElemLiText);
+                    textModMsg.appendChild(newElemLi);
+                    // recognition.stop();
+                    return;
+                });
             }
-            document.getElementById('status').innerHTML = "status: recording...";
-            recognition.start();
-          }
+
+            // function resolveAfterKeitaiso(q) {
+            //     return new Promise(resolve => {
+            //         buildkeitaiso(() => {
+            //             resolve("resolved");
+            //         }, q);
+            //     });
+            // }
+
+            function resolveAfterKeitaiso(q) {
+                return new Promise(resolve => {
+                    buildkeitaiso(q);
+                });
+            }
+
+            async function asyncCall(p) {
+                await resolveAfterKeitaiso(p);
+                // console.log(abc);
+
+                // document.getElementById('search_param').setAttribute('value', a);
+                // console.log("setAttribute");
+                // document.googleform.submit();
+                // console.log("submitted");
+                // document.getElementById('status').innerHTML = "status: searched!";                
+                // console.log("finish");
+                // recognition.stop();
+                // return;
+                // expected output: "resolved"
+            }
+
+            document.getElementById("start_recognition").onclick = function vr_function() {
+
+                a = "";
+                var results = "";
+
+                var result_text = document.getElementById('result_text');
+                while (result_text.firstChild) {
+                  result_text.removeChild(result_text.firstChild);
+                }
+
+                SpeechRecognition = webkitSpeechRecognition || SpeechRecognition;
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'ja';
+
+                // return progress
+                recognition.interimResults = true;
+                
+                // continue recognition
+                recognition.continuous = true;
+
+                recognition.onresult = function(event) {
+                    results = event.results;
+
+                    if (document.getElementById('interim_result') == null) {
+                        var interim = document.createElement('div');
+                        // console.log(interim)
+                        interim.setAttribute('class', 'results');
+                        interim.setAttribute('id', 'interim_result');
+                        document.getElementById('result_text').appendChild(interim);
+                    }     
+
+                    for (var i = event.resultIndex; i < results.length; i++) {
+                        if (results[i].isFinal) {
+                            speech_count++;
+                            result_line = "<font size='4'>" + results[i][0].transcript + "</font>";
+                            document.getElementById('interim_result').innerHTML = result_line;
+
+                            document.getElementById('interim_result').setAttribute('id', 'result' + speech_count);
+                            console.log(document.getElementById('interim_result'));
+                            recognition.stop();
+
+                            asyncCall(results[i][0].transcript);
+                        }
+                        // else {
+                        //   document.getElementById('interim_result').innerHTML = "<font size='4' color='gray'>" + results[i][0].transcript + "</font>";
+                        //   flag_speech = 1;
+                        // }
+                    }
+                }
+                document.getElementById('status').innerHTML = "status: recording...";
+                recognition.start();
+            }
+
         </script>
 
         <footer>
-            <p>©Copyright 2020 Takuya Hara.</p>
+            <p>©Copyright 2021 Takuya Hara.</p>
         </footer>
 
     </body>
