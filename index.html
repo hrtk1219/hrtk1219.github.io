@@ -1,4 +1,107 @@
-<!DOCTYPE html>
+<p id=“volume”></p>
+<div id=“vol_effect”></div>
+
+<script>
+function audio_input(){
+window.AudioContext = window.AudioContext || window.webkitAudioContext;
+var context = new AudioContext();
+//AnalyserNodeオブジェクト(音声解析用クラス)のインスタンス化
+var analyser = context.createAnalyser();
+//音声の音量を取得した要素分格納する変数
+var frequencies = new Uint8Array(analyser.frequencyBinCount);
+// 音量を表示するためのdiv要素を取得
+var volume = document.getElementById(‘volume’);
+var effect = document.getElementById(‘vol_effect’);
+var loop;
+ 
+//マイクの入力音声の振幅(音量)を取得する関数
+var getFrequency=function(){
+//周波数ごとの振幅を取得して配列に格納
+analyser.getByteFrequencyData(frequencies);
+return frequencies.reduce(function(previous,current){
+return previous+current;
+})/analyser.frequencyBinCount;
+};
+//端末のaudio(マイク)にアクセスする
+navigator.mediaDevices.getUserMedia({audio: true})
+.then(function(stream){
+window.hackForMozzila=stream;
+//音声の入力点(createMediaStreamSource)にマイク入力(stream)を設定し,
+//出力点であるAnayserNodeオブジェクト(analyser)と接続(connect)させる。
+context.createMediaStreamSource(stream).connect(analyser);
+})
+//マイクにアクセスできなかったorユーザーがマイクの利用を許可しなかった場合はエラーを表示
+.catch(function(err) {
+alert(err.message);
+});
+// 音量を取得して表示を更新
+(loop = function() {
+//マイクに入力されている音声の音量を取得、表示
+volume = Math.floor(getFrequency());
+volume.innerHTML=volume;
+effect.style.width=volume+“%”;
+requestAnimationFrame(loop);
+})();
+}
+</script> 
+
+<input type=“button” onclick="audio_input();" value=“マイクon”>
+
+<!-- <!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Web Speech API</title>
+<script>
+window.SpeechRecognition = window.SpeechRecognition || webkitSpeechRecognition;
+var recognition = new webkitSpeechRecognition();
+recognition.lang = 'ja';
+recognition.interimResults = true;
+recognition.continuous = true;
+
+let start = Date.now()
+ 
+recognition.onsoundstart = function(){
+  document.getElementById('status').innerHTML = "認識中";
+  let end = Date.now();
+  var elapsed = end - start; // ミリ秒単位の経過時間
+  console.log(elapsed);
+};
+recognition.onnomatch = function(){
+  document.getElementById('status').innerHTML = "もう一度試してください";
+};
+recognition.onerror= function(){
+  document.getElementById('status').innerHTML = "エラー";
+};
+recognition.onsoundend = function(){
+  document.getElementById('status').innerHTML = "停止中";
+};
+ 
+recognition.onresult = function(event){
+    var results = event.results;
+    console.log(event.timeStamp);
+    for (var i = event.resultIndex; i<results.length; i++){
+      if(results[i].isFinal)
+        document.getElementById('result_text').innerHTML = results[i][0].transcript;
+      else
+        document.getElementById('result_text').innerHTML = "[途中経過] "+ results[i][0].transcript;
+      console.log(results[i][0].transcript);
+    }
+}
+</script> 
+</head>
+<body>
+<textarea id="result_text" cols="100" rows="10">
+</textarea>
+<br>
+<textarea id="status" cols="100" rows="1">
+</textarea>
+<br>
+<input type="button" onClick="recognition.start();" value="音認開始">
+</body>
+</html> -->
+
+<!-- <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -21,7 +124,7 @@ recognition.onresult = function(event){
 <br>
 <input type="button" onClick="recognition.start();" value="音認開始">
 </body>
-</html>
+</html> -->
 
 <style>/*
 <!DOCTYPE html>
